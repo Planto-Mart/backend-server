@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
+import generalRoutes from "./routes/general";
 
 interface CloudflareBindings {
   ENVIRONMENT?: string;
@@ -222,5 +223,7 @@ app.get("/status", (c) => {
     requestId: c.get('requestId')
   });
 });
+
+app.route('/general',generalRoutes);
 
 export default app;
