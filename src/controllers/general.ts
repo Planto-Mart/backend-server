@@ -3,28 +3,6 @@ import { drizzle } from 'drizzle-orm/d1';
 import { eq, and } from 'drizzle-orm';
 import { contactUs, newsletterSubscribers, userProfiles } from '../db/schema';
 
-export const getAllProfiles = async (c: Context) => {
-  try {
-    const db = drizzle(c.env.DB);
-
-    // Fetch all profiles from the database
-    const profiles = await db.select().from(userProfiles).all();
-
-    return c.json({
-      success: true,
-      message: 'Profiles fetched successfully!',
-      total: profiles.length,
-      data: profiles,
-    });
-  } catch (error) {
-    console.error('Error fetching profiles:', error);
-    return c.json({
-      success: false,
-      message: 'Internal server error. Please try again later.'
-    }, 500);
-  }
-};
-
 export const subscribeToNewsletter = async (c: Context) => {
   try {
     // Get the database instance from the context
@@ -134,6 +112,28 @@ export const subscribeToNewsletter = async (c: Context) => {
   }
 };
 
+export const getAllProfiles = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+
+    // Fetch all profiles from the database
+    const profiles = await db.select().from(userProfiles).all();
+
+    return c.json({
+      success: true,
+      message: 'Profiles fetched successfully!',
+      total: profiles.length,
+      data: profiles,
+    });
+  } catch (error) {
+    console.error('Error fetching profiles:', error);
+    return c.json({
+      success: false,
+      message: 'Internal server error. Please try again later.'
+    }, 500);
+  }
+};
+
 export const createProfile = async (c: Context) => {
   try {
     const db = drizzle(c.env.DB);
@@ -217,5 +217,36 @@ export const submitContactUsForm = async (c: Context) => {
   } catch (error) {
     console.error('Contact form submission error:', error);
     return c.json({ success: false, message: 'Internal server error. Please try again later.' }, 500);
+  }
+};
+
+
+export const getProfileByUUID = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const uuid = c.req.param('uuid');
+
+    if (!uuid) {
+      return c.json({ success: false, message: 'UUID is required.' }, 400);
+    }
+
+    const profile = await db
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.uuid, uuid))
+      .limit(1);
+
+    if (profile.length === 0) {
+      return c.json({ success: false, message: 'Profile not found.' }, 404);
+    }
+
+    return c.json({
+      success: true,
+      message: 'Profile fetched successfully!',
+      data: profile[0],
+    });
+  } catch (error) {
+    console.error('Error fetching profile by UUID:', error);
+    return c.json({ success: false, message: 'Internal server error.' }, 500);
   }
 };

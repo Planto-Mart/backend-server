@@ -218,4 +218,3 @@ export const vendorProducts = sqliteTable("vendorProducts", {
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 });
-
