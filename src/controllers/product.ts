@@ -95,6 +95,7 @@ export const getAllProducts = async (c: Context)=>{
     const allProducts = await db.select().from(products).all();
     return c.json({
       success: true,
+      message: `All ${allProducts.length} products fetched successfully`,
       data: allProducts
     });
 
