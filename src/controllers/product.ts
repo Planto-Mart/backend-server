@@ -175,3 +175,46 @@ export const updateProduct = async (c: Context) => {
     }, 500);
   }
 };
+
+// Get product by ID
+// GET PRODUCT BY ID
+export const getProductById = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const productId = c.req.param('product_id');
+
+    if (!productId) {
+      return c.json({
+        success: false,
+        message: "Product ID is required",
+      }, 400);
+    }
+
+    const product = await db
+      .select()
+      .from(products)
+      .where(eq(products.product_id, productId))
+      .get();
+
+    if (!product) {
+      return c.json({
+        success: false,
+        message: `No product found with ID ${productId}`,
+      }, 404);
+    }
+
+    return c.json({
+      success: true,
+      message: `Product with ID ${productId} fetched successfully.`,
+      data: product,
+    });
+
+  } catch (error) {
+    console.error("Error fetching product by ID: ", error);
+    return c.json({
+      success: false,
+      message: "Internal Server Error, Please try again later",
+    }, 500);
+  }
+};
+

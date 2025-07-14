@@ -175,3 +175,175 @@ export const deleteVendor = async (c: Context) => {
     }, 500);
   }
 };
+
+// GET ALL VENDORS - ADMIN
+export const getAllVendorsAdmin = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const vendors = await db.select().from(vendorProfiles).all();
+
+    return c.json({
+      success: true,
+      message: `Fetched ${vendors.length} vendors (admin)`,
+      data: vendors,
+    });
+
+  } catch (error) {
+    console.error('Error fetching vendors (admin):', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
+
+// GET ALL VENDORS - PUBLIC (Safe Fields Only)
+export const getAllVendorsPublic = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const vendors = await db.select().from(vendorProfiles).all();
+
+    const safeVendors = vendors.map(({ id, slug, name, description, banner_image, logo, image_gallery, rating, about_us, features, business_name, business_address, contact_person_name, contact_email, contact_phone, return_policy, shipping_policy, privacy_policy, seller_terms, is_verified, status }) => ({
+      id,
+      slug,
+      name,
+      description,
+      banner_image,
+      logo,
+      image_gallery,
+      rating,
+      about_us,
+      features,
+      business_name,
+      business_address,
+      contact_person_name,
+      contact_email,
+      contact_phone,
+      return_policy,
+      shipping_policy,
+      privacy_policy,
+      seller_terms,
+      is_verified,
+      status,
+    }));
+
+    return c.json({
+      success: true,
+      message: `Fetched ${safeVendors.length} vendors (public)`,
+      data: safeVendors,
+    });
+
+  } catch (error) {
+    console.error('Error fetching vendors (public):', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
+
+// GET VENDOR BY ID - ADMIN
+export const getVendorByIdAdmin = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const vendorID = c.req.param('vendor_id');
+
+    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.id, Number(vendorID))).get();
+
+    if (!vendor) {
+      return c.json({
+        success: false,
+        message: `Vendor with ID ${vendorID} not found`,
+      }, 404);
+    }
+
+    return c.json({
+      success: true,
+      message: 'Vendor fetched successfully (admin)',
+      data: vendor,
+    });
+
+  } catch (error) {
+    console.error('Error fetching vendor by ID (admin):', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
+
+// GET VENDOR BY ID - PUBLIC
+export const getVendorByIdPublic = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const vendorID = c.req.param('vendor_id');
+
+    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.id, Number(vendorID))).get();
+
+    if (!vendor) {
+      return c.json({
+        success: false,
+        message: `Vendor with ID ${vendorID} not found`,
+      }, 404);
+    }
+
+    const {
+      id,
+      slug,
+      name,
+      description,
+      banner_image,
+      logo,
+      image_gallery,
+      rating,
+      about_us,
+      features,
+      business_name,
+      business_address,
+      contact_person_name,
+      contact_email,
+      contact_phone,
+      return_policy,
+      shipping_policy,
+      privacy_policy,
+      seller_terms,
+      is_verified,
+      status
+    } = vendor;
+
+    return c.json({
+      success: true,
+      message: 'Vendor fetched successfully (public)',
+      data: {
+        id,
+        slug,
+        name,
+        description,
+        banner_image,
+        logo,
+        image_gallery,
+        rating,
+        about_us,
+        features,
+        business_name,
+        business_address,
+        contact_person_name,
+        contact_email,
+        contact_phone,
+        return_policy,
+        shipping_policy,
+        privacy_policy,
+        seller_terms,
+        is_verified,
+        status
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching vendor by ID (public):', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
