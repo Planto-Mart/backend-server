@@ -14,10 +14,10 @@ const vendorRoutes = new Hono();
 vendorRoutes.post('/register', vendorRegister);
 vendorRoutes.patch('/update/:vendor_id', updateVendor);
 vendorRoutes.delete('/delete/:vendor_id', deleteVendor);
-vendorRoutes.get('get-all-vendors', getAllVendorsPublic);
-vendorRoutes.get('/get/:vendor_id', getVendorByIdPublic );
+vendorRoutes.get('/get-all-vendors', getAllVendorsPublic);
+vendorRoutes.get('/get/:user_uuid', getVendorByIdPublic );
 
 vendorRoutes.get('/get-all-vendors-admin', getAllVendorsAdmin);
-vendorRoutes.get('/get-admin/:vendor_id', getVendorByIdAdmin);
+vendorRoutes.get('/get-admin/:user_uuid', getVendorByIdAdmin);
 
 export default vendorRoutes;

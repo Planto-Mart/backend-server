@@ -246,14 +246,14 @@ export const getAllVendorsPublic = async (c: Context) => {
 export const getVendorByIdAdmin = async (c: Context) => {
   try {
     const db = drizzle(c.env.DB);
-    const vendorID = c.req.param('vendor_id');
+    const userUUID = c.req.param('user_uuid');
 
-    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.id, Number(vendorID))).get();
+    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.user_uuid, userUUID)).get();
 
     if (!vendor) {
       return c.json({
         success: false,
-        message: `Vendor with ID ${vendorID} not found`,
+        message: `Vendor with user ID ${userUUID} not found`,
       }, 404);
     }
 
@@ -276,14 +276,15 @@ export const getVendorByIdAdmin = async (c: Context) => {
 export const getVendorByIdPublic = async (c: Context) => {
   try {
     const db = drizzle(c.env.DB);
-    const vendorID = c.req.param('vendor_id');
+    const userUUID = c.req.param('user_uuid');
+    console.log('Fetching vendor with ID:', userUUID);
 
-    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.id, Number(vendorID))).get();
+    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.user_uuid, userUUID)).get();
 
     if (!vendor) {
       return c.json({
         success: false,
-        message: `Vendor with ID ${vendorID} not found`,
+        message: `Vendor with user ID ${userUUID} not found`,
       }, 404);
     }
 
