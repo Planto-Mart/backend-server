@@ -61,3 +61,53 @@ export const userProfiles = sqliteTable("userProfiles", {
   reviews: text("reviews"), // Store as JSON string
 });
 
+
+export const products = sqliteTable("products", {
+  productSeq: integer("productSeq").primaryKey({ autoIncrement: true }),
+
+  product_id: text("product_id").unique().notNull(),
+
+  slug: text("slug").notNull(),
+
+  title: text("title").notNull(),
+
+  description: text("description").notNull(),
+
+  category: text("category").notNull(),
+
+  about_in_bullets: text("about_in_bullets", { mode: "json" }).notNull(),
+
+  image_gallery: text("image_gallery", { mode: "json" }).notNull(),
+
+  price: real("price").notNull(),
+
+  brand: text("brand").notNull(),
+
+  vendorID: text("vendor_id").notNull(),
+
+  raiting: real("raiting").notNull(),
+
+  reviewNumbers: integer("review_numbers").notNull(),
+
+  reviews: text("reviews", { mode: "json" }), // optional
+
+  quantity: integer("quantity").notNull(),
+
+  discountPercent: real("discount_percent"), // optional
+
+  discountPrice: real("discount_price"), // optional
+
+  variants: text("variants", { mode: "json" }), // optional
+
+  variantState: integer("variant_state", { mode: "boolean" }).notNull(),
+
+  featured: integer("featured", { mode: "boolean" }).notNull(),
+
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
+});

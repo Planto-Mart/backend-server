@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { requestId } from "hono/request-id";
 import generalRoutes from "./routes/general";
+import productRoutes from "./routes/product";
 
 interface CloudflareBindings {
   ENVIRONMENT?: string;
@@ -225,5 +226,6 @@ app.get("/status", (c) => {
 });
 
 app.route('/general',generalRoutes);
+app.route('/product',productRoutes);
 
 export default app;
