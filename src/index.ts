@@ -53,7 +53,7 @@ app.use('*', cors({
     return !origin || allowedOrigins.includes(origin) ? (origin || "*") : "";
   },
   allowHeaders: ['Content-Type', 'Authorization'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'PATCH','PUT', 'DELETE', 'OPTIONS'],
   maxAge: 86400, // 24 hours
   credentials: true
 }));
