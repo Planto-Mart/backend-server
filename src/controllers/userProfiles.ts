@@ -128,6 +128,8 @@ export const updateProfileByUUID = async (c: Context) => {
       if (body[key] !== undefined) updateData[key] = body[key];
     }
 
+    updateData.updated_at = new Date().toISOString();
+
     if (Object.keys(updateData).length === 0) {
       return c.json({ success: false, message: 'No valid fields to update.' }, 400);
     }
