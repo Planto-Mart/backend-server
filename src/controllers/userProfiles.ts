@@ -106,72 +106,45 @@ export const getProfileByUUID = async (c: Context) => {
 export const updateProfileByUUID = async (c: Context) => {
   try {
     const db = drizzle(c.env.DB);
-    const uuid = c.req.param('uuid'); // Fetch UUID from URL parameter
-    const fieldsToUpdate = await c.req.json(); // Extract fields to update from the request body
+    const uuid = c.req.param('uuid');
+    const body = await c.req.json();
 
-    // Validate if UUID is provided and that at least one field to update is passed
-    if (!uuid || Object.keys(fieldsToUpdate).length === 0) {
-      return c.json({
-        success: false,
-        message: 'UUID and at least one field to update are required.',
-      }, 400);
+    if (!uuid) {
+      return c.json({ success: false, message: 'UUID is required.' }, 400);
     }
 
-    // Check if the provided email is valid if it's part of the fieldsToUpdate
-    if (fieldsToUpdate.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldsToUpdate.email)) {
-      return c.json({
-        success: false,
-        message: 'Invalid email address.',
-      }, 400);
+    // If user_login_info is present and is an object, stringify it
+    if (body.user_login_info && typeof body.user_login_info === 'object') {
+      body.user_login_info = JSON.stringify(body.user_login_info);
     }
 
-    // Check if the profile with the given UUID exists
-    const existingProfile = await db
-      .select()
-      .from(userProfiles)
-      .where(eq(userProfiles.uuid, uuid))
-      .limit(1);
-
-    if (existingProfile.length === 0) {
-      return c.json({
-        success: false,
-        message: `No profile found with UUID ${uuid}.`,
-      }, 404);
+    // Only allow updating fields that exist in the schema
+    const allowedFields = [
+      'full_name', 'avatar_url', 'phone', 'address', 'city', 'state', 'pincode',
+      'updated_at', 'email_notifications', 'bio', 'user_login_info', 'reviews'
+    ];
+    const updateData:any = {};
+    for (const key of allowedFields) {
+      if (body[key] !== undefined) updateData[key] = body[key];
     }
 
-    // Add updated_at timestamp
-    const updatedAt = new Date().toISOString();
-    fieldsToUpdate.updated_at = updatedAt;
+    if (Object.keys(updateData).length === 0) {
+      return c.json({ success: false, message: 'No valid fields to update.' }, 400);
+    }
 
-    // Update the profile with the provided fields
     const result = await db
       .update(userProfiles)
-      .set(fieldsToUpdate)
+      .set(updateData)
       .where(eq(userProfiles.uuid, uuid))
       .run() as any;
 
-    // Check if any rows were affected (meaning the update actually happened)
     if (result.rowsAffected === 0) {
-      return c.json({
-        success: false,
-        message: `No changes were made to the profile with UUID ${uuid}.`,
-      }, 404);
+      return c.json({ success: false, message: 'Profile not found or nothing changed.' }, 404);
     }
 
-    // Return success message with updated data
-    return c.json({
-      success: true,
-      message: `Profile with UUID ${uuid} updated successfully.`,
-      data: {
-        ...existingProfile[0],
-        ...fieldsToUpdate, // Return updated fields as part of the response
-      },
-    });
+    return c.json({ success: true, message: 'Profile updated successfully.' });
   } catch (error) {
     console.error('Error updating profile by UUID:', error);
-    return c.json({
-      success: false,
-      message: 'Internal server error.',
-    }, 500);
+    return c.json({ success: false, message: 'Internal server error.' }, 500);
   }
 };
