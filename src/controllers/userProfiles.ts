@@ -139,6 +139,10 @@ export const updateProfileByUUID = async (c: Context) => {
       }, 404);
     }
 
+    // Add updated_at timestamp
+    const updatedAt = new Date().toISOString();
+    fieldsToUpdate.updated_at = updatedAt;
+
     // Update the profile with the provided fields
     const result = await db
       .update(userProfiles)
