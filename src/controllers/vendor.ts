@@ -1,64 +1,124 @@
-import { Context } from 'hono';
-import { drizzle } from 'drizzle-orm/d1';
+import { customAlphabet } from 'nanoid';
 import { eq } from 'drizzle-orm';
-import { vendorProfiles } from '../db/schema';
+import { vendorProfiles } from '../db/schema'; // Adjust to your structure
+import { drizzle } from 'drizzle-orm/d1'; // Adjust if using different driver
+import type { Context } from 'hono';
 
-// REGISTER A NEW VENDOR
+// Create a custom nanoid generator: 8 characters, A-Z + 0-9
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8);
+
 export const vendorRegister = async (c: Context) => {
   try {
     const db = drizzle(c.env.DB);
     const body = await c.req.json();
 
     const {
-      user_uuid,slug,name,
-      description,banner_image,logo,
-      image_gallery,rating,
-      about_us,features,
-      business_name,business_address,
+      user_uuid, slug, name,
+      description, banner_image, logo,
+      image_gallery, rating,
+      about_us, features,
+      business_name, business_address,
       business_registration_number,
-      gstin_number,pan_number,
-      legal_structure,contact_person_name,
-      contact_email,contact_phone,
-      bank_account_number,bank_name,
-      ifsc_code,shipping_fee_mode,
-      gst_rate,return_policy,
-      shipping_policy,privacy_policy,
-      seller_terms,business_license,
-      identity_verification,is_verified,
+      gstin_number, pan_number,
+      legal_structure, contact_person_name,
+      contact_email, contact_phone,
+      bank_account_number, bank_name,
+      ifsc_code, shipping_fee_mode,
+      gst_rate, return_policy,
+      shipping_policy, privacy_policy,
+      seller_terms, business_license,
+      identity_verification, is_verified,
       status,
     } = body;
 
+    // Validate required fields
     if (!user_uuid || !slug || !name || !contact_email) {
       return c.json({
         success: false,
-        message: 'Required fields: user_uuid, slug, name, contact_email',
+        message: 'Missing required fields: user_uuid, slug, name, contact_email',
       }, 400);
     }
 
-    const result = await db.insert(vendorProfiles).values({
-      user_uuid, slug, name,
-      description,banner_image,
-      logo,image_gallery,
-      rating,about_us,
-      features,business_name,
-      business_address,business_registration_number,
-      gstin_number,pan_number,
-      legal_structure,contact_person_name,
-      contact_email,contact_phone,
-      bank_account_number,bank_name,
-      ifsc_code,shipping_fee_mode,
-      gst_rate,return_policy,
-      shipping_policy,privacy_policy,
-      seller_terms,business_license,
+    // Check if user_uuid exists in vendorProfiles (vendor linkage)
+    const vendorExists = await db
+      .select()
+      .from(vendorProfiles)
+      .where(eq(vendorProfiles.user_uuid, user_uuid))
+      .limit(1);
+
+    if (vendorExists.length === 0) {
+      return c.json({
+        success: false,
+        message: `Vendor registration failed: user_uuid "${user_uuid}" does not exist in vendorProfiles.`,
+      }, 403);
+    }
+
+    // Check if slug is unique
+    const slugExists = await db
+      .select()
+      .from(vendorProfiles)
+      .where(eq(vendorProfiles.slug, slug))
+      .limit(1);
+
+    if (slugExists.length > 0) {
+      return c.json({
+        success: false,
+        message: `Slug "${slug}" is already taken. Please choose another one.`,
+      }, 409);
+    }
+
+    // Generate vendor_id in VND-XXXXXXXX format
+    const vendorID = `VND-${nanoid()}`;
+
+    const now = new Date().toISOString();
+
+    // Insert new vendor profile
+    const insertResult = await db.insert(vendorProfiles).values({
+      user_uuid,
+      vendor_id: vendorID,
+      slug,
+      name,
+      description,
+      banner_image,
+      logo,
+      image_gallery: image_gallery ? JSON.stringify(image_gallery) : null,
+      rating,
+      about_us,
+      features: features ? JSON.stringify(features) : null,
+      business_name,
+      business_address,
+      business_registration_number,
+      gstin_number,
+      pan_number,
+      legal_structure,
+      contact_person_name,
+      contact_email,
+      contact_phone,
+      bank_account_number,
+      bank_name,
+      ifsc_code,
+      shipping_fee_mode,
+      gst_rate,
+      return_policy,
+      shipping_policy,
+      privacy_policy,
+      seller_terms,
+      business_license,
       identity_verification,
       is_verified: is_verified ?? 0,
       status: status ?? 'pending',
+      created_at: now,
+      updated_at: now,
     });
 
     return c.json({
       success: true,
-      message: 'Vendor registered successfully',
-      data: result,
+      message: 'Vendor registered successfully.',
+      data: {
+        vendor_id: vendorID,
+        slug,
+        name,
+      },
     });
 
   } catch (error) {
@@ -69,6 +129,7 @@ export const vendorRegister = async (c: Context) => {
     }, 500);
   }
 };
+
 
 // UPDATE VENDOR
 export const updateVendor = async (c: Context) => {

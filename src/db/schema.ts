@@ -123,6 +123,10 @@ export const vendorProfiles = sqliteTable("vendorProfiles", {
     })
     .unique(),
 
+  vendor_id: text("vendor_id")
+    .notNull()
+    .unique(),
+
   slug: text("slug").notNull().unique(), // For SEO-friendly vendor URLs
   name: text("name").notNull(),          // Shop/Vendor name
   description: text("description"),
