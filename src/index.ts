@@ -6,6 +6,7 @@ import { requestId } from "hono/request-id";
 import generalRoutes from "./routes/general";
 import productRoutes from "./routes/product";
 import vendorRoutes from "./routes/vendor";
+import userProfileRoutes from "./routes/userProfiles";
 
 interface CloudflareBindings {
   ENVIRONMENT?: string;
@@ -229,5 +230,6 @@ app.get("/status", (c) => {
 app.route('/general',generalRoutes);
 app.route('/product',productRoutes);
 app.route('/vendor',vendorRoutes);
+app.route('/user-profile',userProfileRoutes);
 
 export default app;
