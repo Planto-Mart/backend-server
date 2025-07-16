@@ -13,7 +13,7 @@ export const vendorRegister = async (c: Context) => {
     const body = await c.req.json();
 
     const {
-      user_uuid, slug, name,
+      user_uuid, name,
       description, banner_image, logo,
       image_gallery, rating,
       about_us, features,
@@ -32,14 +32,14 @@ export const vendorRegister = async (c: Context) => {
     } = body;
 
     // Validate required fields
-    if (!user_uuid || !slug || !name || !contact_email) {
+    if (!user_uuid || !name || !contact_email) {
       return c.json({
         success: false,
-        message: 'Missing required fields: user_uuid, slug, name, contact_email',
+        message: 'Missing required fields: user_uuid, name, contact_email',
       }, 400);
     }
 
-    // Check if user_uuid exists in vendorProfiles (vendor linkage)
+    // Check if user_uuid exists in vendorProfiles
     const vendorExists = await db
       .select()
       .from(vendorProfiles)
@@ -53,23 +53,21 @@ export const vendorRegister = async (c: Context) => {
       }, 403);
     }
 
-    // Check if slug is unique
-    const slugExists = await db
-      .select()
-      .from(vendorProfiles)
-      .where(eq(vendorProfiles.slug, slug))
-      .limit(1);
+    // Generate a unique slug
+    let slug: string;
+    let isSlugUnique = false;
+    do {
+      slug = `vendor-${nanoid(10)}`; // customize the format if needed
+      const slugCheck = await db
+        .select()
+        .from(vendorProfiles)
+        .where(eq(vendorProfiles.slug, slug))
+        .limit(1);
+      if (slugCheck.length === 0) isSlugUnique = true;
+    } while (!isSlugUnique);
 
-    if (slugExists.length > 0) {
-      return c.json({
-        success: false,
-        message: `Slug "${slug}" is already taken. Please choose another one.`,
-      }, 409);
-    }
-
-    // Generate vendor_id in VND-XXXXXXXX format
+    // Generate vendor_id
     const vendorID = `VND-${nanoid()}`;
-
     const now = new Date().toISOString();
 
     // Insert new vendor profile
@@ -129,6 +127,7 @@ export const vendorRegister = async (c: Context) => {
     }, 500);
   }
 };
+
 
 
 // UPDATE VENDOR
