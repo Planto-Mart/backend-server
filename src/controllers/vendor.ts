@@ -39,31 +39,33 @@ export const vendorRegister = async (c: Context) => {
       }, 400);
     }
 
-    // Check if user_uuid exists in vendorProfiles
-    const vendorExists = await db
+    // Prevent duplicate vendor registration for same user_uuid
+    const existingVendor = await db
       .select()
       .from(vendorProfiles)
       .where(eq(vendorProfiles.user_uuid, user_uuid))
-      .limit(1);
+      .limit(1)
+      .then(res => res.at(0));
 
-    if (vendorExists.length === 0) {
+    if (existingVendor) {
       return c.json({
         success: false,
-        message: `Vendor registration failed: user_uuid "${user_uuid}" does not exist in vendorProfiles.`,
-      }, 403);
+        message: `A vendor profile already exists for this user_uuid. Duplicate registrations are not allowed.`,
+      }, 409);
     }
 
     // Generate a unique slug
     let slug: string;
     let isSlugUnique = false;
     do {
-      slug = `vendor-${nanoid(10)}`; // customize the format if needed
-      const slugCheck = await db
+      slug = `vendor-${nanoid(10)}`;
+      const slugExists = await db
         .select()
         .from(vendorProfiles)
         .where(eq(vendorProfiles.slug, slug))
-        .limit(1);
-      if (slugCheck.length === 0) isSlugUnique = true;
+        .limit(1)
+        .then(res => res.length > 0);
+      if (!slugExists) isSlugUnique = true;
     } while (!isSlugUnique);
 
     // Generate vendor_id
@@ -71,7 +73,7 @@ export const vendorRegister = async (c: Context) => {
     const now = new Date().toISOString();
 
     // Insert new vendor profile
-    const insertResult = await db.insert(vendorProfiles).values({
+    await db.insert(vendorProfiles).values({
       user_uuid,
       vendor_id: vendorID,
       slug,
