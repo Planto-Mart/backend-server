@@ -48,7 +48,7 @@ app.use('*', cors({
   origin: (origin) => {
     const allowedOrigins = [
       "http://localhost:3000",
-      "https://your-domain.com",
+      "https://main-website-plantomart.pages.dev",
     ];
     return !origin || allowedOrigins.includes(origin) ? (origin || "*") : "";
   },
