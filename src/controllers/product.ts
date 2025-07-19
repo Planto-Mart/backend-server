@@ -105,6 +105,42 @@ export const getAllProducts = async (c: Context) => {
   }
 };
 
+// GET ALL products based on the vedorID  
+export const getProductsByVendor = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+
+    const vendorID = c.req.param("vendorID") || c.req.query("vendorID");
+
+    if (!vendorID) {
+      return c.json({
+        success: false,
+        message: "Vendor ID is required",
+      }, 400);
+    }
+
+    const vendorProducts = await db
+      .select()
+      .from(products)
+      .where(eq(products.vendorID, vendorID))
+      .all();
+
+    return c.json({
+      success: true,
+      message: `Found ${vendorProducts.length} products for vendor ${vendorID}`,
+      data: vendorProducts,
+    });
+
+  } catch (error) {
+    console.error("Error fetching vendor products: ", error);
+    return c.json({
+      success: false,
+      message: "Internal Server Error, Please try again later",
+    }, 500);
+  }
+};
+
+
 // DELETE PRODUCT
 export const deleteProduct = async (c: Context) => {
   try {
