@@ -1,7 +1,11 @@
 import { Context } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
-import { products } from '../db/schema';
+import { eq, and, or } from 'drizzle-orm';
+import { products, productVariants, productVariantGroups } from '../db/schema';
+import { customAlphabet } from 'nanoid';
+
+// Create a custom nanoid generator for variant IDs
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8);
 
 // CREATE PRODUCT
 export const createProduct = async (c: Context) => {
@@ -81,6 +85,295 @@ export const createProduct = async (c: Context) => {
     return c.json({
       success: false,
       message: 'Internal Server Error, Please try again later',
+    }, 500);
+  }
+};
+
+// CREATE PRODUCT VARIANT
+export const createProductVariant = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const body = await c.req.json();
+
+    const {
+      parent_product_id,
+      variant_name,
+      variant_type,
+      price,
+      quantity,
+      discount_percent,
+      image_gallery,
+      description,
+    } = body;
+
+    if (!parent_product_id || !variant_name || !variant_type || !price || quantity === undefined) {
+      return c.json({
+        success: false,
+        message: 'Please provide all required fields: parent_product_id, variant_name, variant_type, price, quantity',
+      });
+    }
+
+    // Check if parent product exists
+    const parentProduct = await db
+      .select()
+      .from(products)
+      .where(eq(products.product_id, parent_product_id))
+      .get();
+
+    if (!parentProduct) {
+      return c.json({
+        success: false,
+        message: 'Parent product not found',
+      }, 404);
+    }
+
+    // Generate unique variant ID and slug
+    const variant_id = `VAR-${nanoid()}`;
+    const baseSlug = parentProduct.slug;
+    const variantSlug = `${baseSlug}-${variant_name.toLowerCase().replace(/\s+/g, '-')}`;
+
+    // Check if slug already exists
+    const existingVariant = await db
+      .select()
+      .from(productVariants)
+      .where(eq(productVariants.slug, variantSlug))
+      .get();
+
+    if (existingVariant) {
+      // Add timestamp to make slug unique
+      const timestamp = Date.now();
+      const uniqueSlug = `${variantSlug}-${timestamp}`;
+      
+      const result = await db.insert(productVariants).values({
+        variant_id,
+        parent_product_id,
+        slug: uniqueSlug,
+        variant_name,
+        variant_type,
+        price: parseFloat(price),
+        quantity: parseInt(quantity),
+        discount_percent: discount_percent ? parseFloat(discount_percent) : null,
+        discount_price: discount_percent ? (parseFloat(price) - (parseFloat(price) * parseFloat(discount_percent) / 100)) : null,
+        image_gallery: image_gallery ? JSON.stringify(image_gallery) : null,
+        description,
+        is_active: true,
+      });
+
+      return c.json({
+        success: true,
+        message: 'Product variant created successfully',
+        data: result,
+      });
+    }
+
+    const result = await db.insert(productVariants).values({
+      variant_id,
+      parent_product_id,
+      slug: variantSlug,
+      variant_name,
+      variant_type,
+      price: parseFloat(price),
+      quantity: parseInt(quantity),
+      discount_percent: discount_percent ? parseFloat(discount_percent) : null,
+      discount_price: discount_percent ? (parseFloat(price) - (parseFloat(price) * parseFloat(discount_percent) / 100)) : null,
+      image_gallery: image_gallery ? JSON.stringify(image_gallery) : null,
+      description,
+      is_active: true,
+    });
+
+    return c.json({
+      success: true,
+      message: 'Product variant created successfully',
+      data: result,
+    });
+
+  } catch (error) {
+    console.error('Error creating product variant: ', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, Please try again later',
+    }, 500);
+  }
+};
+
+// GET PRODUCT BY SLUG (with variants)
+export const getProductBySlug = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const slug = c.req.param('slug');
+
+    if (!slug) {
+      return c.json({
+        success: false,
+        message: 'Slug parameter is required',
+      }, 400);
+    }
+
+    // First, try to find the main product by slug
+    let product = await db
+      .select()
+      .from(products)
+      .where(eq(products.slug, slug))
+      .get();
+
+    if (product) {
+      // Get variants for this product
+      const variants = await db
+        .select()
+        .from(productVariants)
+        .where(and(
+          eq(productVariants.parent_product_id, product.product_id),
+          eq(productVariants.is_active, true)
+        ))
+        .all();
+
+      return c.json({
+        success: true,
+        message: 'Product fetched successfully',
+        data: {
+          ...product,
+          variants: variants.length > 0 ? variants : null,
+          has_variants: variants.length > 0
+        },
+      });
+    }
+
+    // If not found as main product, try to find as variant
+    const variant = await db
+      .select()
+      .from(productVariants)
+      .where(and(
+        eq(productVariants.slug, slug),
+        eq(productVariants.is_active, true)
+      ))
+      .get();
+
+    if (variant) {
+      // Get the parent product
+      const parentProduct = await db
+        .select()
+        .from(products)
+        .where(eq(products.product_id, variant.parent_product_id))
+        .get();
+
+      if (parentProduct) {
+        // Get all variants for this parent product
+        const allVariants = await db
+          .select()
+          .from(productVariants)
+          .where(and(
+            eq(productVariants.parent_product_id, parentProduct.product_id),
+            eq(productVariants.is_active, true)
+          ))
+          .all();
+
+        return c.json({
+          success: true,
+          message: 'Product variant fetched successfully',
+          data: {
+            ...parentProduct,
+            variants: allVariants,
+            has_variants: true,
+            selected_variant: variant,
+            current_variant_slug: slug
+          },
+        });
+      }
+    }
+
+    return c.json({
+      success: false,
+      message: `No product found with slug '${slug}'`,
+    }, 404);
+
+  } catch (error) {
+    console.error('Error fetching product by slug: ', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, Please try again later',
+    }, 500);
+  }
+};
+
+// UPDATE PRODUCT VARIANT
+export const updateProductVariant = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const variant_id = c.req.param('variant_id');
+    const fieldsToUpdate = await c.req.json();
+
+    if (!variant_id || Object.keys(fieldsToUpdate).length === 0) {
+      return c.json({
+        success: false,
+        message: 'Variant ID and at least one field to update are required.',
+      }, 400);
+    }
+
+    // Calculate discount price if discount_percent is updated
+    if (fieldsToUpdate.discount_percent && fieldsToUpdate.price) {
+      fieldsToUpdate.discount_price = fieldsToUpdate.price - (fieldsToUpdate.price * fieldsToUpdate.discount_percent / 100);
+    }
+
+    const result = await db
+      .update(productVariants)
+      .set({
+        ...fieldsToUpdate,
+        updated_at: new Date().toISOString()
+      })
+      .where(eq(productVariants.variant_id, variant_id))
+      .run() as any;
+
+    if (result.rowsAffected === 0) {
+      return c.json({
+        success: false,
+        message: `No variant found with ID ${variant_id} or nothing changed.`,
+      }, 404);
+    }
+
+    return c.json({
+      success: true,
+      message: `Variant with ID ${variant_id} updated successfully.`,
+      data: result,
+    });
+
+  } catch (error) {
+    console.error('Error updating product variant:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
+
+// DELETE PRODUCT VARIANT
+export const deleteProductVariant = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const variant_id = c.req.param('variant_id');
+
+    if (!variant_id) {
+      return c.json({
+        success: false,
+        message: 'Variant ID is required',
+      }, 400);
+    }
+
+    const deleted = await db
+      .delete(productVariants)
+      .where(eq(productVariants.variant_id, variant_id))
+      .run();
+
+    return c.json({
+      success: true,
+      message: `Variant with ID ${variant_id} deleted successfully.`,
+      data: deleted,
+    });
+
+  } catch (error) {
+    console.error('Error deleting product variant:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
     }, 500);
   }
 };
@@ -188,7 +481,7 @@ export const updateProduct = async (c: Context) => {
       .update(products)
       .set(fieldsToUpdate)
       .where(eq(products.product_id, product_id))
-      .run() as any; // Cloudflare’s D1Result<T> is typed generically, but doesn’t expose rowsAffected directly in TypeScript, even though it's available at runtime in most run() calls. Drizzle/ORM doesn't bridge that type deeply for D1 yet.
+      .run() as any; // Cloudflare's D1Result<T> is typed generically, but doesn't expose rowsAffected directly in TypeScript, even though it's available at runtime in most run() calls. Drizzle/ORM doesn't bridge that type deeply for D1 yet.
 
     if (result.rowsAffected === 0) {
       return c.json({

@@ -111,6 +111,76 @@ export const products = sqliteTable("products", {
     .default(sql`CURRENT_TIMESTAMP`)
 });
 
+// NEW: Product Variants Table
+export const productVariants = sqliteTable("productVariants", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  
+  variant_id: text("variant_id").unique().notNull(),
+  
+  parent_product_id: text("parent_product_id")
+    .notNull()
+    .references(() => products.product_id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  
+  slug: text("slug").notNull().unique(), // Unique slug for each variant
+  
+  variant_name: text("variant_name").notNull(), // e.g., "Small", "Medium", "Large"
+  
+  variant_type: text("variant_type").notNull(), // e.g., "size", "color", "material"
+  
+  price: real("price").notNull(), // Individual price for this variant
+  
+  quantity: integer("quantity").notNull(), // Individual stock for this variant
+  
+  discount_percent: real("discount_percent"), // Optional discount for this variant
+  
+  discount_price: real("discount_price"), // Calculated discount price
+  
+  image_gallery: text("image_gallery", { mode: "json" }), // Variant-specific images
+  
+  description: text("description"), // Variant-specific description
+  
+  is_active: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
+});
+
+// NEW: Product Variant Groups Table (for organizing variants)
+export const productVariantGroups = sqliteTable("productVariantGroups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  
+  group_id: text("group_id").unique().notNull(),
+  
+  parent_product_id: text("parent_product_id")
+    .notNull()
+    .references(() => products.product_id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  
+  group_name: text("group_name").notNull(), // e.g., "Size", "Color"
+  
+  group_type: text("group_type").notNull(), // e.g., "size", "color"
+  
+  is_required: integer("is_required", { mode: "boolean" }).notNull().default(true),
+  
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
+});
+
 export const vendorProfiles = sqliteTable("vendorProfiles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
 

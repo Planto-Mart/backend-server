@@ -15,6 +15,13 @@
       "when": 1752553742395,
       "tag": "0001_fixed_trauma",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1752985022478,
+      "tag": "0002_dry_boom_boom",
+      "breakpoints": true
     }
   ]
 }
