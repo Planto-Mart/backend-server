@@ -2,10 +2,12 @@ import { Context } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, and, or } from 'drizzle-orm';
 import { products, productVariants, productVariantGroups } from '../db/schema';
-import { customAlphabet } from 'nanoid';
-
-// Create a custom nanoid generator for variant IDs
-const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 8);
+// Simple ID generator for variants (since nanoid might not be available)
+const generateVariantId = () => {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `VAR-${timestamp}-${random}`;
+};
 
 // CREATE PRODUCT
 export const createProduct = async (c: Context) => {
@@ -95,6 +97,8 @@ export const createProductVariant = async (c: Context) => {
     const db = drizzle(c.env.DB);
     const body = await c.req.json();
 
+    console.log('Creating product variant with body:', body);
+
     const {
       parent_product_id,
       variant_name,
@@ -107,6 +111,7 @@ export const createProductVariant = async (c: Context) => {
     } = body;
 
     if (!parent_product_id || !variant_name || !variant_type || !price || quantity === undefined) {
+      console.error('Missing required fields:', { parent_product_id, variant_name, variant_type, price, quantity });
       return c.json({
         success: false,
         message: 'Please provide all required fields: parent_product_id, variant_name, variant_type, price, quantity',
@@ -121,16 +126,21 @@ export const createProductVariant = async (c: Context) => {
       .get();
 
     if (!parentProduct) {
+      console.error('Parent product not found:', parent_product_id);
       return c.json({
         success: false,
         message: 'Parent product not found',
       }, 404);
     }
 
+    console.log('Parent product found:', parentProduct.slug);
+
     // Generate unique variant ID and slug
-    const variant_id = `VAR-${nanoid()}`;
+    const variant_id = generateVariantId();
     const baseSlug = parentProduct.slug;
     const variantSlug = `${baseSlug}-${variant_name.toLowerCase().replace(/\s+/g, '-')}`;
+
+    console.log('Generated variant slug:', variantSlug);
 
     // Check if slug already exists
     const existingVariant = await db
@@ -139,37 +149,18 @@ export const createProductVariant = async (c: Context) => {
       .where(eq(productVariants.slug, variantSlug))
       .get();
 
+    let finalSlug = variantSlug;
     if (existingVariant) {
       // Add timestamp to make slug unique
       const timestamp = Date.now();
-      const uniqueSlug = `${variantSlug}-${timestamp}`;
-      
-      const result = await db.insert(productVariants).values({
-        variant_id,
-        parent_product_id,
-        slug: uniqueSlug,
-        variant_name,
-        variant_type,
-        price: parseFloat(price),
-        quantity: parseInt(quantity),
-        discount_percent: discount_percent ? parseFloat(discount_percent) : null,
-        discount_price: discount_percent ? (parseFloat(price) - (parseFloat(price) * parseFloat(discount_percent) / 100)) : null,
-        image_gallery: image_gallery ? JSON.stringify(image_gallery) : null,
-        description,
-        is_active: true,
-      });
-
-      return c.json({
-        success: true,
-        message: 'Product variant created successfully',
-        data: result,
-      });
+      finalSlug = `${variantSlug}-${timestamp}`;
+      console.log('Slug conflict, using unique slug:', finalSlug);
     }
 
-    const result = await db.insert(productVariants).values({
+    const variantData = {
       variant_id,
       parent_product_id,
-      slug: variantSlug,
+      slug: finalSlug,
       variant_name,
       variant_type,
       price: parseFloat(price),
@@ -177,9 +168,15 @@ export const createProductVariant = async (c: Context) => {
       discount_percent: discount_percent ? parseFloat(discount_percent) : null,
       discount_price: discount_percent ? (parseFloat(price) - (parseFloat(price) * parseFloat(discount_percent) / 100)) : null,
       image_gallery: image_gallery ? JSON.stringify(image_gallery) : null,
-      description,
+      description: description || null,
       is_active: true,
-    });
+    };
+
+    console.log('Inserting variant with data:', variantData);
+
+    const result = await db.insert(productVariants).values(variantData);
+
+    console.log('Variant created successfully:', result);
 
     return c.json({
       success: true,
