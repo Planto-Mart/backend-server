@@ -379,3 +379,94 @@ export const getVendorByIdPublic = async (c: Context) => {
     }, 500);
   }
 };
+
+// GET VENDOR BY SLUG - PUBLIC
+export const getVendorBySlugPublic = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const slug = c.req.param('slug');
+    console.log('Fetching vendor with slug:', slug);
+
+    if (!slug) {
+      return c.json({
+        success: false,
+        message: 'Slug parameter is required',
+      }, 400);
+    }
+
+    const vendor = await db.select().from(vendorProfiles).where(eq(vendorProfiles.slug, slug)).get();
+
+    if (!vendor) {
+      return c.json({
+        success: false,
+        message: `Vendor with slug '${slug}' not found`,
+      }, 404);
+    }
+
+    const {
+      id,
+      vendor_id,
+      user_uuid,
+      slug: vendorSlug,
+      name,
+      description,
+      banner_image,
+      logo,
+      image_gallery,
+      rating,
+      about_us,
+      features,
+      business_name,
+      business_address,
+      contact_person_name,
+      contact_email,
+      contact_phone,
+      return_policy,
+      shipping_policy,
+      privacy_policy,
+      seller_terms,
+      is_verified,
+      status,
+      created_at,
+      updated_at
+    } = vendor;
+
+    return c.json({
+      success: true,
+      message: 'Vendor fetched successfully by slug (public)',
+      data: {
+        id,
+        vendor_id,
+        slug: vendorSlug,
+        name,
+        description,
+        banner_image,
+        logo,
+        image_gallery,
+        rating,
+        about_us,
+        features,
+        business_name,
+        business_address,
+        contact_person_name,
+        contact_email,
+        contact_phone,
+        return_policy,
+        shipping_policy,
+        privacy_policy,
+        seller_terms,
+        is_verified,
+        status,
+        created_at,
+        updated_at
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching vendor by slug (public):', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error',
+    }, 500);
+  }
+};
