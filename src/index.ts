@@ -90,7 +90,7 @@ app.use('*', logger());
 app.use('*', prettyJSON());
 app.use('*', timing());
 app.use('*', cache({ cacheName: 'plantomart-api' }));
-app.use('*', compress());
+// app.use('*', compress());
 app.use('*', etag());
 
 // --- Error Handling ---
