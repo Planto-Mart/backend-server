@@ -9,7 +9,8 @@ import {
   createProductVariant,
   getProductBySlug,
   updateProductVariant,
-  deleteProductVariant
+  deleteProductVariant,
+  getFeaturedProducts
 } from '../controllers/product';
 
 const productRoutes = new Hono();
@@ -26,5 +27,9 @@ productRoutes.patch('/update/:product_id', updateProduct);
 productRoutes.post('/variants/create', createProductVariant);
 productRoutes.patch('/variants/update/:variant_id', updateProductVariant);
 productRoutes.delete('/variants/delete/:variant_id', deleteProductVariant);
+
+
+// Featured get requests
+productRoutes.get('/featured',getFeaturedProducts);
 
 export default productRoutes;
