@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, gte, lte } from 'drizzle-orm';
 import { products, productVariants, productVariantGroups } from '../db/schema';
 // Simple ID generator for variants (since nanoid might not be available)
 const generateVariantId = () => {
@@ -603,6 +603,56 @@ export const getFeaturedProductsByCategory = async (c: Context) => {
     });
   } catch (error) {
     console.error('Error fetching featured products by category:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, please try again later',
+    }, 500);
+  }
+};
+
+// Fetch products starting from a given price (optionally within a range)
+export const getProductsByStartingPrice = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    // Accept price as query param (?price=149) or route param
+    const priceParam = c.req.query('price') || c.req.param('price');
+    const rangeParam = c.req.query('range') || c.req.param('range');
+    const price = priceParam ? parseFloat(priceParam) : NaN;
+    const range = rangeParam ? parseFloat(rangeParam) : null;
+    if (isNaN(price)) {
+      return c.json({
+        success: false,
+        message: 'Price parameter is required and must be a valid number',
+      }, 400);
+    }
+    let query;
+    if (range && !isNaN(range)) {
+      query = db
+        .select()
+        .from(products)
+        .where(and(gte(products.price, price), lte(products.price, price + range)))
+        .orderBy(products.price);
+    } else {
+      query = db
+        .select()
+        .from(products)
+        .where(gte(products.price, price))
+        .orderBy(products.price);
+    }
+    const foundProducts = await query.all();
+    if (!foundProducts || foundProducts.length === 0) {
+      return c.json({
+        success: false,
+        message: `No products found starting from price ₹${price}`,
+      }, 404);
+    }
+    return c.json({
+      success: true,
+      message: `Found ${foundProducts.length} products starting from price ₹${price}` + (range ? ` to ₹${price + range}` : ''),
+      data: foundProducts,
+    });
+  } catch (error) {
+    console.error('Error fetching products by starting price:', error);
     return c.json({
       success: false,
       message: 'Internal Server Error, please try again later',

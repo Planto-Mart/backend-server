@@ -11,7 +11,8 @@ import {
   updateProductVariant,
   deleteProductVariant,
   getFeaturedProducts,
-  getFeaturedProductsByCategory
+  getFeaturedProductsByCategory,
+  getProductsByStartingPrice
 } from '../controllers/product';
 
 const productRoutes = new Hono();
@@ -29,9 +30,9 @@ productRoutes.post('/variants/create', createProductVariant);
 productRoutes.patch('/variants/update/:variant_id', updateProductVariant);
 productRoutes.delete('/variants/delete/:variant_id', deleteProductVariant);
 
-
 // Featured get requests
 productRoutes.get('/featured', getFeaturedProducts);
 productRoutes.get('/featured-on-category/:category', getFeaturedProductsByCategory);
+productRoutes.get('/starting-price', getProductsByStartingPrice);
 
 export default productRoutes;
