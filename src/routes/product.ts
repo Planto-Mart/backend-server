@@ -13,7 +13,8 @@ import {
   getFeaturedProducts,
   getFeaturedProductsByCategory,
   getProductsByStartingPrice,
-  getProductsByMinDiscount
+  getProductsByMinDiscount,
+  getTopRatedProductsByVendor
 } from '../controllers/product';
 
 const productRoutes = new Hono();
@@ -36,5 +37,6 @@ productRoutes.get('/featured', getFeaturedProducts);
 productRoutes.get('/featured-on-category/:category', getFeaturedProductsByCategory);
 productRoutes.get('/starting-price', getProductsByStartingPrice);
 productRoutes.get('/discounted/:discount?', getProductsByMinDiscount);
+productRoutes.get('/top-rated/:vendorID?', getTopRatedProductsByVendor);
 
 export default productRoutes;

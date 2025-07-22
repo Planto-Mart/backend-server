@@ -700,3 +700,41 @@ export const getProductsByMinDiscount = async (c: Context) => {
     }, 500);
   }
 };
+
+// Fetch top 4 rated products for a given vendorID
+export const getTopRatedProductsByVendor = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const vendorID = c.req.query('vendorID') || c.req.param('vendorID');
+    if (!vendorID) {
+      return c.json({
+        success: false,
+        message: 'vendorID parameter is required',
+      }, 400);
+    }
+    const topRated = await db
+      .select()
+      .from(products)
+      .where(eq(products.vendorID, vendorID))
+      .orderBy(sql`${products.raiting} DESC`)
+      .all();
+    if (!topRated || topRated.length === 0) {
+      return c.json({
+        success: false,
+        message: `No products found for vendorID '${vendorID}'`,
+      }, 404);
+    }
+    const top4 = topRated.slice(0, 4);
+    return c.json({
+      success: true,
+      message: `Found ${top4.length} top rated products for vendorID '${vendorID}'`,
+      data: top4,
+    });
+  } catch (error) {
+    console.error('Error fetching top rated products by vendor:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, please try again later',
+    }, 500);
+  }
+};
