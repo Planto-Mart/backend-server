@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { drizzle } from 'drizzle-orm/d1';
-import { eq, and, or, gte, lte } from 'drizzle-orm';
+import { eq, and, or, gte, lte, sql } from 'drizzle-orm';
 import { products, productVariants, productVariantGroups } from '../db/schema';
 // Simple ID generator for variants (since nanoid might not be available)
 const generateVariantId = () => {
@@ -653,6 +653,47 @@ export const getProductsByStartingPrice = async (c: Context) => {
     });
   } catch (error) {
     console.error('Error fetching products by starting price:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, please try again later',
+    }, 500);
+  }
+};
+
+// Fetch products with discountPercent >= given value, sorted by discountPercent desc, top 4
+export const getProductsByMinDiscount = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    const discountParam = c.req.query('discount') || c.req.param('discount');
+    const minDiscount = discountParam ? parseFloat(discountParam) : NaN;
+    if (isNaN(minDiscount)) {
+      return c.json({
+        success: false,
+        message: 'Discount parameter is required and must be a valid number',
+      }, 400);
+    }
+    // Fetch products with discountPercent >= minDiscount, sorted by discountPercent desc
+    const productsWithDiscount = await db
+      .select()
+      .from(products)
+      .where(gte(products.discountPercent, minDiscount))
+      .orderBy(sql`${products.discountPercent} DESC`)
+      .all();
+    if (!productsWithDiscount || productsWithDiscount.length === 0) {
+      return c.json({
+        success: false,
+        message: `No products found with discount >= ${minDiscount}%`,
+      }, 404);
+    }
+    // Return top 4 (or all if less than 4)
+    const topDiscounted = productsWithDiscount.slice(0, 4);
+    return c.json({
+      success: true,
+      message: `Found ${topDiscounted.length} products with discount >= ${minDiscount}%`,
+      data: topDiscounted,
+    });
+  } catch (error) {
+    console.error('Error fetching products by min discount:', error);
     return c.json({
       success: false,
       message: 'Internal Server Error, please try again later',

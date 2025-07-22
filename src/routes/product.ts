@@ -12,7 +12,8 @@ import {
   deleteProductVariant,
   getFeaturedProducts,
   getFeaturedProductsByCategory,
-  getProductsByStartingPrice
+  getProductsByStartingPrice,
+  getProductsByMinDiscount
 } from '../controllers/product';
 
 const productRoutes = new Hono();
@@ -34,5 +35,6 @@ productRoutes.delete('/variants/delete/:variant_id', deleteProductVariant);
 productRoutes.get('/featured', getFeaturedProducts);
 productRoutes.get('/featured-on-category/:category', getFeaturedProductsByCategory);
 productRoutes.get('/starting-price', getProductsByStartingPrice);
+productRoutes.get('/discounted/:discount?', getProductsByMinDiscount);
 
 export default productRoutes;
