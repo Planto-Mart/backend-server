@@ -760,16 +760,16 @@ export const getProductsByCategory = async (c: Context) => {
     if (!categoryProducts || categoryProducts.length === 0) {
       return c.json({
         success: false,
-        message: `No featured products found for category '${category}'`,
+        message: `No  products found for category '${category}'`,
       }, 404);
     }
     return c.json({
       success: true,
-      message: `Found ${categoryProducts.length} featured products for category '${category}'`,
+      message: `Found ${categoryProducts.length} products for category '${category}'`,
       data: categoryProducts,
     });
   } catch (error) {
-    console.error('Error fetching featured products by category:', error);
+    console.error('Error fetching products by category:', error);
     return c.json({
       success: false,
       message: 'Internal Server Error, please try again later',
