@@ -738,3 +738,41 @@ export const getTopRatedProductsByVendor = async (c: Context) => {
     }, 500);
   }
 };
+
+
+
+export const getProductsByCategory = async (c: Context) => {
+  try {
+    const db = drizzle(c.env.DB);
+    // Accept category as query param (?category=Indoor Plants) or route param
+    const category = c.req.query('category') || c.req.param('category');
+    if (!category) {
+      return c.json({
+        success: false,
+        message: 'Category parameter is required',
+      }, 400);
+    }
+    const categoryProducts = await db
+      .select()
+      .from(products)
+      .where(eq(products.category, category))
+      .all();
+    if (!categoryProducts || categoryProducts.length === 0) {
+      return c.json({
+        success: false,
+        message: `No featured products found for category '${category}'`,
+      }, 404);
+    }
+    return c.json({
+      success: true,
+      message: `Found ${categoryProducts.length} featured products for category '${category}'`,
+      data: categoryProducts,
+    });
+  } catch (error) {
+    console.error('Error fetching featured products by category:', error);
+    return c.json({
+      success: false,
+      message: 'Internal Server Error, please try again later',
+    }, 500);
+  }
+};

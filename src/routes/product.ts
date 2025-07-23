@@ -14,7 +14,8 @@ import {
   getFeaturedProductsByCategory,
   getProductsByStartingPrice,
   getProductsByMinDiscount,
-  getTopRatedProductsByVendor
+  getTopRatedProductsByVendor,
+  getProductsByCategory
 } from '../controllers/product';
 
 const productRoutes = new Hono();
@@ -26,6 +27,7 @@ productRoutes.get('/get/:product_id', getProductById);
 productRoutes.get('/get-by-slug/:slug', getProductBySlug); // NEW: Get product by slug
 productRoutes.delete('/delete/:product_id', deleteProduct);
 productRoutes.patch('/update/:product_id', updateProduct);
+productRoutes.get('/on-category/:category', getProductsByCategory);
 
 // NEW: Variant management routes
 productRoutes.post('/variants/create', createProductVariant);
