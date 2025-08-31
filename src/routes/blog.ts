@@ -3,7 +3,7 @@ import { createBlogPost, getAllBlogs, getBlogBySlug, getBlogsByCategory, updateB
 
 const blogRoutes = new Hono();
 
-blogRoutes.post('/create-blog', createBlogPost);
+blogRoutes.post('/create-post', createBlogPost);
 blogRoutes.get('/get-all', getAllBlogs);
 blogRoutes.get('/get/:slug', getBlogBySlug);
 blogRoutes.get('/category/:category', getBlogsByCategory);
