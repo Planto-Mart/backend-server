@@ -293,8 +293,12 @@ export const vendorProducts = sqliteTable("vendorProducts", {
     .default(sql`CURRENT_TIMESTAMP`),
 });
 
+
 export const blogs = sqliteTable("blogs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  
+  // Unique blog identifier (similar to vendor_id pattern)
+  blogId: text("blog_id").notNull().unique(),
 
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
@@ -303,10 +307,10 @@ export const blogs = sqliteTable("blogs", {
   content: text("content").notNull(), // Markdown, HTML, or serialized rich text
 
   category: text("category").notNull(), // e.g., "green-living", "plant-care-101"
-  tags: text("tags"), // comma-separated or JSON string (e.g., ["indoor", "care"])
+  tags: text("tags"), // JSON string for array of tags (e.g., ["indoor", "care"])
 
   authorName: text("author_name").notNull(),
-  authorId: text("author_id"), // if you use a users table
+  authorId: text("author_id"), // User UUID or email - matches controller validation
 
   featuredImage: text("featured_image"), // URL or path
   isFeatured: integer("is_featured", { mode: "boolean" }).default(false).notNull(),
@@ -314,9 +318,11 @@ export const blogs = sqliteTable("blogs", {
 
   views: integer("views").default(0).notNull(),
 
+  // SEO fields
   seoTitle: text("seo_title"),
   seoDescription: text("seo_description"),
 
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+  // Timestamps - using text to match controller's ISO string format
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull()
 });
