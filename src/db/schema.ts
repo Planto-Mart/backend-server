@@ -292,3 +292,31 @@ export const vendorProducts = sqliteTable("vendorProducts", {
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const blogs = sqliteTable("blogs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+
+  excerpt: text("excerpt"), // Short preview text or summary
+  content: text("content").notNull(), // Markdown, HTML, or serialized rich text
+
+  category: text("category").notNull(), // e.g., "green-living", "plant-care-101"
+  tags: text("tags"), // comma-separated or JSON string (e.g., ["indoor", "care"])
+
+  authorName: text("author_name").notNull(),
+  authorId: text("author_id"), // if you use a users table
+
+  featuredImage: text("featured_image"), // URL or path
+  isFeatured: integer("is_featured", { mode: "boolean" }).default(false).notNull(),
+  isPublished: integer("is_published", { mode: "boolean" }).default(false).notNull(),
+
+  views: integer("views").default(0).notNull(),
+
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`)
+});

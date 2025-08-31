@@ -7,6 +7,7 @@ import generalRoutes from "./routes/general";
 import productRoutes from "./routes/product";
 import vendorRoutes from "./routes/vendor";
 import userProfileRoutes from "./routes/userProfiles";
+import blogRoutes from "./routes/blog";
 
 interface CloudflareBindings {
   ENVIRONMENT?: string;
@@ -232,5 +233,6 @@ app.route('/general',generalRoutes);
 app.route('/product',productRoutes);
 app.route('/vendor',vendorRoutes);
 app.route('/user-profile',userProfileRoutes);
+app.route('/blog',blogRoutes);
 
 export default app;
