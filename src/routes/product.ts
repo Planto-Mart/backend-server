@@ -17,6 +17,7 @@ import {
   getTopRatedProductsByVendor,
   getProductsByCategory
 } from '../controllers/product';
+import { createProductCombination, bulkCreateProductCombinations, getProductCombinations, getProductCombination, updateProductCombination, deleteProductCombination, getCombinationsForProduct, deleteProductCombinationsForProduct, getCombinationsContainingProduct } from '../controllers/productCombiner';
 
 const productRoutes = new Hono();
 
@@ -40,5 +41,18 @@ productRoutes.get('/featured-on-category/:category', getFeaturedProductsByCatego
 productRoutes.get('/starting-price', getProductsByStartingPrice);
 productRoutes.get('/discounted/:discount?', getProductsByMinDiscount);
 productRoutes.get('/top-rated/:vendorID?', getTopRatedProductsByVendor);
+
+
+// Product combination routes 
+// Product combination routes 
+productRoutes.post('/combinations/create', createProductCombination);
+productRoutes.post('/combinations/bulk-create', bulkCreateProductCombinations);
+productRoutes.get('/combinations', getProductCombinations);
+productRoutes.get('/combinations/:id', getProductCombination);
+productRoutes.put('/combinations/:id', updateProductCombination);
+productRoutes.delete('/combinations/:id', deleteProductCombination);
+productRoutes.get('/:productId/combinations', getCombinationsForProduct);
+productRoutes.delete('/:productId/combinations', deleteProductCombinationsForProduct);
+productRoutes.get('/:productId/containing-combinations', getCombinationsContainingProduct);
 
 export default productRoutes;

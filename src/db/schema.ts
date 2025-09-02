@@ -330,3 +330,37 @@ export const blogs = sqliteTable("blogs", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull()
 });
+
+
+export const productCombinations = sqliteTable("productCombinations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+
+  // Unique identifier for this combination
+  combination_id: text("combination_id").notNull().unique(),
+
+  // The main product for which this combination is shown
+  parent_product_id: text("parent_product_id")
+    .notNull()
+    .references(() => products.product_id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+
+  // Optional display label (e.g., "Frequently Bought Together")
+  combination_name: text("combination_name").notNull(),
+
+  // Optional internal or user-visible description
+  description: text("description"),
+
+  // JSON array of child product references: [{ product_id: "xxx", quantity: 1 }, ...]
+  child_products: text("child_products", { mode: "json" }).notNull(),
+
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`)
+});
+
