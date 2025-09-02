@@ -27,6 +27,8 @@ export const createProduct = async (c: Context) => {
       brand,
       vendorID,
       raiting,
+      content_description,
+      content_shipping_delivery,
       reviewNumbers,
       reviews,
       quantity,
@@ -46,6 +48,8 @@ export const createProduct = async (c: Context) => {
       !about_in_bullets ||
       !price ||
       !brand ||
+      !content_description || 
+      !content_shipping_delivery ||
       !vendorID
     ) {
       return c.json({
@@ -62,6 +66,8 @@ export const createProduct = async (c: Context) => {
       category,
       about_in_bullets,
       image_gallery,
+      content_description,
+      content_shipping_delivery,
       price,
       brand,
       vendorID,

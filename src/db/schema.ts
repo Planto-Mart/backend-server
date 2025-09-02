@@ -72,6 +72,10 @@ export const products = sqliteTable("products", {
 
   description: text("description").notNull(),
 
+  content_description: text("content_description"),
+
+  content_shipping_delivery: text("content_shipping_delivery"),
+
   category: text("category").notNull(),
 
   about_in_bullets: text("about_in_bullets", { mode: "json" }).notNull(),
