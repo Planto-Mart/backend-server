@@ -364,3 +364,32 @@ export const productCombinations = sqliteTable("productCombinations", {
     .default(sql`CURRENT_TIMESTAMP`)
 });
 
+
+export const productReviews = sqliteTable("productReviews", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  review_id: text("review_id").notNull().unique(),
+  product_id: text("product_id")
+    .notNull()
+    .references(() => products.product_id, {  
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  user_uuid: text("user_uuid")
+    .notNull()
+    .references(() => userProfiles.uuid, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
+  likes: integer("rating").notNull().default(0), 
+  liked_by: text("liked_by", { mode: "json" }).notNull().default("[]"), // JSON array of user_uuids who liked
+  disliked_by: text("disliked_by", { mode: "json" }).notNull().default("[]"), // JSON array of user_uuids who disliked
+  dislikes: integer("dislikes").notNull().default(0), 
+  comments: text("title").notNull(),
+  replies: text("replies", { mode: "json" }).notNull().default("[]"), // JSON array of { user_uuid, comment, created_at }
+  created_at: text("created_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text("updated_at")
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});

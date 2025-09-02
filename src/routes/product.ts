@@ -18,6 +18,7 @@ import {
   getProductsByCategory
 } from '../controllers/product';
 import { createProductCombination, bulkCreateProductCombinations, getProductCombinations, getProductCombination, updateProductCombination, deleteProductCombination, getCombinationsForProduct, deleteProductCombinationsForProduct, getCombinationsContainingProduct } from '../controllers/productCombiner';
+import { createProductReview, getReviewByProductID, getProductReview, updateProductReview, deleteProductReview, likeReview, dislikeReview, removeLikeDislike, addReplyToReview, deleteAllReviewsForProduct, getReviewStats, bulkDeleteReviews, getRecentReviews } from '../controllers/ProductReviews';
 
 const productRoutes = new Hono();
 
@@ -43,7 +44,21 @@ productRoutes.get('/discounted/:discount?', getProductsByMinDiscount);
 productRoutes.get('/top-rated/:vendorID?', getTopRatedProductsByVendor);
 
 
-// Product combination routes 
+// Product review routes
+productRoutes.post('/reviews/create', createProductReview);
+productRoutes.get('/reviews/product/:productId', getReviewByProductID);
+productRoutes.get('/reviews/:id', getProductReview);
+productRoutes.patch('/reviews/:id', updateProductReview);
+productRoutes.delete('/reviews/:id', deleteProductReview);
+productRoutes.post('/reviews/:id/like', likeReview);
+productRoutes.post('/reviews/:id/dislike', dislikeReview);
+productRoutes.post('/reviews/:id/remove-reaction', removeLikeDislike);
+productRoutes.post('/reviews/:id/replies', addReplyToReview);
+productRoutes.delete('/reviews/product/:productId', deleteAllReviewsForProduct);
+productRoutes.get('/reviews/product/:productId/stats', getReviewStats);
+productRoutes.post('/reviews/bulk-delete', bulkDeleteReviews);
+productRoutes.get('/reviews/recent', getRecentReviews);
+
 // Product combination routes 
 productRoutes.post('/combinations/create', createProductCombination);
 productRoutes.post('/combinations/bulk-create', bulkCreateProductCombinations);
