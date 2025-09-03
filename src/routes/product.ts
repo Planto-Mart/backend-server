@@ -48,7 +48,7 @@ productRoutes.get('/top-rated/:vendorID?', getTopRatedProductsByVendor);
 productRoutes.post('/reviews/create', createProductReview);
 productRoutes.get('/reviews/product/:productId', getReviewByProductID);
 productRoutes.get('/reviews/:id', getProductReview);
-productRoutes.patch('/reviews/:id', updateProductReview);
+productRoutes.patch('/update-review/:id', updateProductReview);
 productRoutes.delete('/reviews/:id', deleteProductReview);
 productRoutes.post('/reviews/:id/like', likeReview);
 productRoutes.post('/reviews/:id/dislike', dislikeReview);
